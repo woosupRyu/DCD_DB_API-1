@@ -37,13 +37,23 @@ def print_check(func):
 def mem_check(func):
     @wraps(func)
     def mem(self, *method_args, **method_kwargs):
+        func(self)
+        cpu_mem_check()
+
+    return mem
+
+
+# decorator
+def time_check(func):
+    @wraps(func)
+    def tc(self, *method_args, **method_kwargs):
         start_time = time.time()
         func(self)
         cpu_mem_check()
         end_time = time.time()
         print('total_time: ', end_time - start_time)
 
-    return mem
+    return tc
 
 
 def reset_table(db):
@@ -513,14 +523,16 @@ class CheckSet(ResetTable):
         self.db.set_location(grid_id='1', x='1', y='4')
         self.ans = self.db.set_obj_list(grid_id='1', cat_id='1', iteration='3', mix_num='1')
 
-    # @mem_check
+    @time_check
+    @mem_check
     @print_check
     def _set_bulk_obj(self):
         # (loc_id, cat_id, img_id, iteration, mix_num, aug_num)
         ex_table = ([('1', '1', "1", "{}".format(i), '1', '-1') for i in range(4, 65533)])
         self.ans = self.db.set_bulk_obj(datas=ex_table)
 
-    # @mem_check
+    @time_check
+    @mem_check
     @print_check
     def _set_bulk_bbox(self):
         self.db.set_object(img_id='1', loc_id='1', cat_id='1', iteration='2', mix_num='-1')
@@ -528,7 +540,8 @@ class CheckSet(ResetTable):
         ex_table = ([("{}".format(i), '1', "1", '1', '1') for i in range(1, 3)])
         self.ans = self.db.set_bulk_bbox(datas=ex_table)
 
-    # @mem_check
+    @time_check
+    @mem_check
     @print_check
     def _set_bulk_img(self):
         img_path = 'img'
