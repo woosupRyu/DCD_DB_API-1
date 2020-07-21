@@ -1520,6 +1520,71 @@ class DB:
             else:
                 return None
 
+    def get_obj_max_iter(self):
+        """
+        Object table의 (iteration) 중 가장 높은 값 반환
+
+        Return:
+            int: Object table의 iteration
+
+            None: 값 없음
+
+            False: 쿼리 실패
+        """
+        try:
+            with self.db.cursor() as cursor:
+                query = "SELECT MAX(iteration) FROM Object"
+                cursor.execute(query)
+                v = sum(cursor.fetchall(), ())
+        except Exception as e:
+            print('Error function:', inspect.stack()[0][3])
+            print(e)
+            self.db.rollback()
+            return False
+        else:
+            self.db.commit()
+            if v:
+                return v[0]
+            else:
+                return None
+
+    def get_bbox_img_id(self, img_id):
+        """
+        Object table의 (img_id)를 입력 받아 Object table의 (obj_id) 찾음
+        찾은 (obj_id)로
+        Bbox table의 (x), (y), (width), (height)와
+        Object_table의 (cat_id), (loc_id) 반환
+
+        Args:
+            img_id (str) : Object table의 (img_id)
+
+        Return:
+            tuple ()(): ((cat_id, loc_id, x, y, width, height), (...)
+
+            None: 값 없음
+
+            False: 쿼리 실패
+        """
+        try:
+            with self.db.cursor() as cursor:
+                query = "SELECT O.cat_id, O.loc_id, Bbox.x, Bbox.y, Bbox.width, Bbox.height " \
+                        "FROM (SELECT obj_id, cat_id, loc_id FROM Object WHERE img_id=%s) AS O " \
+                        "INNER JOIN Bbox ON O.obj_id=Bbox.obj_id"
+                value = (img_id)
+                cursor.execute(query, value)
+                v = cursor.fetchall()
+        except Exception as e:
+            print('Error function:', inspect.stack()[0][3])
+            print(e)
+            self.db.rollback()
+            return False
+        else:
+            self.db.commit()
+            if v:
+                return v
+            else:
+                return None
+
     def list_bbox(self, obj_id):
         """
         Bbox table의 (obj_id)를 이용해
@@ -1622,6 +1687,40 @@ class DB:
                 value = (cat_id, grid_id, check_num)
                 cursor.execute(query, value)
                 v = cursor.fetchall()
+        except Exception as e:
+            print('Error function:', inspect.stack()[0][3])
+            print(e)
+            self.db.rollback()
+            return False
+        else:
+            self.db.commit()
+            if v:
+                return v
+            else:
+                return None
+
+    def list_img_id_TC(self, type, check_num):
+        """
+        Image table의 (type, check_num)인
+        Image table의 (id)를 반환
+
+        Args:
+            type(str): Image table의 (type) -> (1 : 원본,  2 : mix, 3 : 합성)
+            check_num(str): Image table의 (check_num) -> (0 : 완료, 1 : 미진행, 2 : 거절)
+
+        Return:
+            tuple (): Image table의 (id)
+
+            None: 값 없음
+
+            False: 쿼리 실패
+        """
+        try:
+            with self.db.cursor() as cursor:
+                query = "SELECT img_id FROM Image WHERE type=%s AND check_num=%s"
+                value = (type, check_num)
+                cursor.execute(query, value)
+                v = sum(cursor.fetchall(), ())
         except Exception as e:
             print('Error function:', inspect.stack()[0][3])
             print(e)

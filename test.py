@@ -203,6 +203,8 @@ class CheckGet(ResetTable):
         self._get_bbox()
         self._get_bbox_img()
         self._get_mask_id()
+        self._get_obj_max_iter()
+        self._get_bbox_img_id()
 
     @print_check
     def _get_env_id(self):
@@ -300,6 +302,20 @@ class CheckGet(ResetTable):
         self.db.set_mask(obj_id='1', x='1', y='2')
         self.ans = self.db.get_mask_id(obj_id='1')
 
+    @print_check
+    def _get_obj_max_iter(self):
+        self.db.set_object(img_id='1', loc_id='1', cat_id='1', iteration='1', mix_num='1')
+        self.db.set_object(img_id='1', loc_id='1', cat_id='1', iteration='2', mix_num='1')
+        self.db.set_object(img_id='1', loc_id='1', cat_id='1', iteration='3', mix_num='1')
+        self.ans = self.db.get_obj_max_iter()
+
+    @print_check
+    def _get_bbox_img_id(self):
+        self.db.set_object(img_id='1', loc_id='1', cat_id='1', iteration='2', mix_num='1')
+        self.db.set_bbox(obj_id='1', x='1', y='2', width='1', height='1')
+        self.db.set_bbox(obj_id='2', x='1', y='3', width='1', height='1')
+        self.ans = self.db.get_bbox_img_id(img_id='1')
+
 
 class CheckList(ResetTable):
     def __init__(self, db):
@@ -311,6 +327,7 @@ class CheckList(ResetTable):
         self._list_bbox()
         self._list_obj()
         self._list_obj_CN()
+        self._list_img_id_TC()
 
     @print_check
     def _list_bbox(self):
@@ -331,6 +348,12 @@ class CheckList(ResetTable):
         self.db.set_image(env_id='20001', img='22', type='1', check_num='1')
         self.db.set_object(img_id='2', loc_id='2', cat_id='1', iteration='1', mix_num='-1')
         self.ans = self.db.list_obj_CN(grid_id='1', cat_id='1', check_num='1')
+
+    @print_check
+    def _list_img_id_TC(self):
+        self.db.set_image(env_id='20001', img='1', type='1', check_num='1')
+        self.db.set_image(env_id='20001', img='1', type='1', check_num='1')
+        self.ans = mydb.list_img_id_TC(type='1', check_num='1')
 
 
 class CheckCheck(ResetTable):
@@ -565,32 +588,35 @@ if __name__ == "__main__":
     # get 함수 test
     cg = CheckGet(mydb)
     cg.check_all()
+    #
+    # # list 함수 test
+    # cl = CheckList(mydb)
+    # cl.check_all()
+    #
+    # # check 함수 test
+    # ct = CheckCheck(mydb)
+    # ct.check_all()
+    #
+    # # update 함수 test
+    # cu = CheckUpdate(mydb)
+    # cu.check_all()
+    #
+    # # delete 함수 test
+    # cd = CheckDelete(mydb)
+    # cd.check_all()
+    #
+    # # aug 함수 test
+    # ca = CheckAug(mydb)
+    # ca.check_all()
+    #
+    # # set 함수 test
+    # cs = CheckSet(mydb)
+    # cs.check_all()
+    #
+    # json_path = "./coco_info.json"
+    # img_path = "./img"
+    # cdj = CheckDbJson(db=mydb, json_path=json_path, img_path=img_path)
+    # cdj.check_all()
+    #
+    #
 
-    # list 함수 test
-    cl = CheckList(mydb)
-    cl.check_all()
-
-    # check 함수 test
-    ct = CheckCheck(mydb)
-    ct.check_all()
-
-    # update 함수 test
-    cu = CheckUpdate(mydb)
-    cu.check_all()
-
-    # delete 함수 test
-    cd = CheckDelete(mydb)
-    cd.check_all()
-
-    # aug 함수 test
-    ca = CheckAug(mydb)
-    ca.check_all()
-
-    # set 함수 test
-    cs = CheckSet(mydb)
-    cs.check_all()
-
-    json_path = "./coco_info.json"
-    img_path = "./img"
-    cdj = CheckDbJson(db=mydb, json_path=json_path, img_path=img_path)
-    cdj.check_all()
