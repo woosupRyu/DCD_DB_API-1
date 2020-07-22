@@ -75,10 +75,11 @@ class ResetTable:
     def _reset_table(self):
         reset_table(self.db)
         self.db.init_table_no_print()
-        self.db.set_environment(ipv4='111.111.111.111', floor='1', width='1', height='1', depth='1')
+        self.db.set_environment(device_id="20001", ipv4="111.111.111.111",
+                                broker_ip="111.111.111.111", floor="1", width="1", height="1", depth="1")
         self.db.set_supercategory(super_name='1')
         self.db.set_grid(width='1', height='1')
-        self.db.set_image(env_id='20001', img='1', type='0', check_num='1')
+        self.db.set_image(env_id='1', img='1', type='0', check_num='1')
         self.db.set_location(grid_id='1', x='1', y='1')
         self.db.set_category(super_id='1', cat_name='1', width='1', height='1', depth='1', iteration='1', thumbnail='1')
         self.db.set_object(loc_id='1', cat_id='1', img_id='1', iteration='1', mix_num='-1')
@@ -107,10 +108,11 @@ class CheckBasic:
     @print_basic
     def _environment(self):
         # check environment fucntions
-        self.db.set_environment(ipv4='111.111.111.111', floor='1', width='1', height='1', depth='1')
-        self.db.get_table(id='20001', table='Environment')
+        self.db.set_environment(device_id="20001", ipv4="111.111.111.111",
+                                broker_ip="111.111.111.111", floor="1", width="1", height="1", depth="1")
+        self.db.get_table(id='1', table='Environment')
         # self.db.delete_table(id='20001', table='Environment')
-        self.db.update_environment(env_id='20001', ipv4='127.223.444.444')
+        self.db.update_environment(env_id='1', ipv4='112.112.112.122')
         self.table = self.db.list_table(table='Environment')
         self.last_id = self.db.get_last_id(table="Environment")
 
@@ -134,10 +136,10 @@ class CheckBasic:
 
     @print_basic
     def _image(self):
-        self.db.set_image(env_id='20001', img='1', type='0', check_num='1')
+        self.db.set_image(env_id='1', img='1', type='0', check_num='1')
         self.db.get_table(id='1', table='Image')
         # self.db.delete_table(id='1', table='Image')
-        self.db.update_image(img_id='1', env_id='20001')
+        self.db.update_image(img_id='1', env_id='1')
         self.table = self.db.list_table(table='Image')
         self.last_id = self.db.get_last_id(table='Image')
 
@@ -194,6 +196,7 @@ class CheckGet(ResetTable):
         self.ans = None
 
     def check_all(self):
+        print("--------------------------------get 함수 결과--------------------------------")
         self._get_env_id()
         self._get_grid_id()
         self._get_super_id_SN()
@@ -215,6 +218,9 @@ class CheckGet(ResetTable):
         self._get_mask_id()
         self._get_obj_max_iter()
         self._get_bbox_img_id()
+        self._get_obj_max_aug()
+        self._get_obj_id_args()
+        self._get_mask_obj_id()
 
     @print_check
     def _get_env_id(self):
@@ -326,6 +332,21 @@ class CheckGet(ResetTable):
         self.db.set_bbox(obj_id='2', x='1', y='3', width='1', height='1')
         self.ans = self.db.get_bbox_img_id(img_id='1')
 
+    @print_check
+    def _get_obj_max_aug(self):
+        self.ans = self.db.get_obj_max_aug()
+
+    @print_check
+    def _get_obj_id_args(self):
+        self.ans = self.db.get_obj_id_args(loc_id='1', cat_id='1', iteration='1', mix_num='-1', aug_num='-1')
+
+    @print_check
+    def _get_mask_obj_id(self):
+        self.db.set_mask(obj_id='1', x='1', y='2')
+        self.db.set_mask(obj_id='1', x='1', y='3')
+        self.db.set_mask(obj_id='1', x='1', y='4')
+        self.ans = self.db.get_mask_obj_id(obj_id='1')
+
 
 class CheckList(ResetTable):
     def __init__(self, db):
@@ -334,6 +355,7 @@ class CheckList(ResetTable):
         self.ans = None
 
     def check_all(self):
+        print("--------------------------------list 함수 결과--------------------------------")
         self._list_bbox()
         self._list_obj()
         self._list_obj_CN()
@@ -355,14 +377,14 @@ class CheckList(ResetTable):
     @print_check
     def _list_obj_CN(self):
         self.db.set_location(grid_id='1', x='1', y='2')
-        self.db.set_image(env_id='20001', img='22', type='1', check_num='1')
+        self.db.set_image(env_id='1', img='22', type='1', check_num='1')
         self.db.set_object(img_id='2', loc_id='2', cat_id='1', iteration='1', mix_num='-1')
         self.ans = self.db.list_obj_CN(grid_id='1', cat_id='1', check_num='1')
 
     @print_check
     def _list_img_id_TC(self):
-        self.db.set_image(env_id='20001', img='1', type='1', check_num='1')
-        self.db.set_image(env_id='20001', img='1', type='1', check_num='1')
+        self.db.set_image(env_id='1', img='1', type='1', check_num='1')
+        self.db.set_image(env_id='1', img='1', type='1', check_num='1')
         self.ans = mydb.list_img_id_TC(type='1', check_num='1')
 
 
@@ -373,6 +395,7 @@ class CheckCheck(ResetTable):
         self.ans = None
 
     def check_all(self):
+        print("--------------------------------check 함수 결과--------------------------------")
         self._check_obj_id()
         self._check_nomix_OBM()
         self._check_cat_id()
@@ -426,6 +449,7 @@ class CheckDelete(ResetTable):
         self.ans = None
 
     def check_all(self):
+        print("--------------------------------delete 함수 결과--------------------------------")
         self._delete_object()
         self._delete_bbox()
         self._delete_mask()
@@ -474,6 +498,7 @@ class CheckAug(ResetTable):
         self.ans = None
 
     def check_all(self):
+        print("--------------------------------aug 함수 결과--------------------------------")
         self._get_aug_mask()
         self._get_aug_img()
         self._get_aug_loc_id()
@@ -489,8 +514,9 @@ class CheckAug(ResetTable):
 
     @print_check
     def _get_aug_img(self):
-        self.db.set_environment(ipv4='111.111.111.111', floor='2', width='1', height='1', depth='1')
-        self.db.set_image(env_id='20002', img='1ddd', type='2', check_num='3')
+        self.db.set_environment(device_id="20002", ipv4="111.111.111.111",
+                                broker_ip="111.111.111.111", floor="1", width="1", height="1", depth="1")
+        self.db.set_image(env_id='2', img='1ddd', type='2', check_num='3')
         self.db.set_location(grid_id='1', x='1', y='2')
         self.db.set_object(img_id='1', loc_id='2', cat_id='1', iteration='1', mix_num='-1')
         self.db.set_object(img_id='2', loc_id='2', cat_id='1', iteration='3', mix_num='-1')
@@ -511,6 +537,7 @@ class CheckSet(ResetTable):
         self.ans = None
 
     def check_all(self):
+        print("--------------------------------set 함수 결과--------------------------------")
         self._set_obj_list()
         self._set_bulk_obj()
         self._set_bulk_bbox()
@@ -545,7 +572,7 @@ class CheckSet(ResetTable):
     @print_check
     def _set_bulk_img(self):
         img_path = 'img'
-        ex_table = (['20001', img_loader(join(img_path, img_p)), '1', '1'] for img_p in sorted(listdir(img_path)))
+        ex_table = (['1', img_loader(join(img_path, img_p)), '1', '1'] for img_p in sorted(listdir(img_path)))
         self.ans = self.db.set_bulk_img(datas=ex_table)
 
 
@@ -560,6 +587,7 @@ class CheckDbJson(ResetTable):
             os.makedirs(self.img_path)
 
     def check_all(self):
+        print("--------------------------------db_to_json 함수 결과--------------------------------")
         self._db_to_json()
 
     @print_check
@@ -572,8 +600,8 @@ class CheckDbJson(ResetTable):
         self.db.set_mask(obj_id='2', x='1', y='4')
         self.db.set_bbox(obj_id='2', x='1', y='1', width='1', height='1')
 
-        self.db.set_image(env_id='20001', img=img, type='0', check_num='1')
-        self.db.set_image(env_id='20001', img=img, type='0', check_num='1')
+        self.db.set_image(env_id='1', img=img, type='0', check_num='1')
+        self.db.set_image(env_id='1', img=img, type='0', check_num='1')
         self.db.set_mask(obj_id='1', x='1', y='2')
         self.db.set_mask(obj_id='1', x='1', y='3')
         self.db.set_mask(obj_id='1', x='1', y='4')
@@ -581,6 +609,7 @@ class CheckDbJson(ResetTable):
 
 
 if __name__ == "__main__":
+
     img_dir = 'img/1.png'
     img = img_loader(img_dir)
 

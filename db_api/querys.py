@@ -6,14 +6,16 @@ initial_queries = list()
 create_env_sql="""
 CREATE TABLE Environment(
 env_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+device_id INT UNSIGNED NOT NULL,
 ipv4 CHAR(50) NOT NULL,
+broker_ip CHAR(50) NOT NULL,
 floor SMALLINT UNSIGNED NOT NULL,
 width SMALLINT UNSIGNED NOT NULL,
 height SMALLINT UNSIGNED NOT NULL,
 depth SMALLINT UNSIGNED NOT NULL,
 PRIMARY KEY(env_id),
-UNIQUE KEY UNIQUE_KEY (ipv4, floor)
-) AUTO_INCREMENT=20001"""
+UNIQUE KEY UNIQUE_KEY (device_id, ipv4, broker_ip, floor)
+)"""
 initial_queries.append(create_env_sql)
 
 # table Grid

@@ -123,7 +123,7 @@ class DB:
             self.db.commit()
             return True
 
-    def del_table(self, table):
+    def del_table(self, table) -> bool:
         """
         mysql databse에 있는 table의 모든 row를 지웁니다.(테이블은 유지)
 
@@ -169,12 +169,14 @@ class DB:
             self.db.commit()
             return True
 
-    def set_environment(self, ipv4, floor, width, height, depth) -> bool:
+    def set_environment(self, device_id, ipv4, broker_ip, floor, width, height, depth) -> bool:
         """
         Environment table에 row 추가
 
         Args:
+            device_id (str): 냉장고의 device id
             ipv4 (str): 연결된 냉장고의 ip
+            broker_ip (str): 냉장고와 연결된 broker ip
             floor (str) : 냉장고 층
             width (str): 냉장고 층 가로길이
             height (str): 냉장고 층 세로길이
@@ -185,9 +187,9 @@ class DB:
         """
         try:
             with self.db.cursor() as cursor:
-                query = 'INSERT INTO Environment(ipv4, floor, width, height, depth) ' \
-                        'VALUES(%s, %s, %s, %s, %s)'
-                values = (ipv4, floor, width, height, depth)
+                query = 'INSERT INTO Environment(device_id, ipv4, broker_ip, floor, width, height, depth) ' \
+                        'VALUES(%s, %s, %s, %s, %s, %s, %s)'
+                values = (device_id, ipv4, broker_ip, floor, width, height, depth)
                 cursor.execute(query, values)
         except Exception as e:
             print('Error function:', inspect.stack()[0][3])
@@ -198,7 +200,8 @@ class DB:
             self.db.commit()
             return True
 
-    def update_environment(self, env_id, ipv4=None, floor=None, width=None, height=None, depth=None) -> bool:
+    def update_environment(self, env_id, device_id=None, ipv4=None, broker_ip=None,
+                           floor=None, width=None, height=None, depth=None) -> bool:
         """
         Environment table의 row 값 갱신
 
@@ -217,8 +220,12 @@ class DB:
             with self.db.cursor() as cursor:
                 query_head = 'UPDATE Environment SET '
                 query_tail = ' WHERE env_id={}'.format(env_id)
+                if device_id is not None:
+                    query_head += "device_id='{}', ".format(device_id)
                 if ipv4 is not None:
                     query_head += "ipv4='{}', ".format(ipv4)
+                if broker_ip is not None:
+                    query_head += "broker_ip='{}', ".format(broker_ip)
                 if floor is not None:
                     query_head += 'floor={}, '.format(floor)
                 if width is not None:
@@ -588,7 +595,8 @@ class DB:
             self.db.commit()
             return True
 
-    def update_object(self, obj_id, img_id=None, loc_id=None, cat_id=None, iteration=None, mix_num=None, aug_num=None) -> bool:
+    def update_object(self, obj_id, img_id=None, loc_id=None, cat_id=None,
+                      iteration=None, mix_num=None, aug_num=None) -> bool:
         """
         Object table의 특정 id 정보 갱신
 
@@ -842,7 +850,7 @@ class DB:
             with self.db.cursor() as cursor:
                 id_name = find_id_name(table)
                 query = "SELECT * From {0} WHERE {1}={2}".format(table, id_name, id)
-                cursor.execute(query, )
+                cursor.execute(query)
                 v = sum(cursor.fetchall(), ())
         except Exception as e:
             print('Error function:', inspect.stack()[0][3])
@@ -885,7 +893,7 @@ class DB:
             return False
         else:
             self.db.commit()
-            if v:
+            if v[0]:
                 return v[0]
             else:
                 return None
@@ -1071,8 +1079,9 @@ class DB:
         x, y = loc_x_y.split('x')
         try:
             with self.db.cursor() as cursor:
-                query = "SELECT loc_id FROM Location WHERE grid_id=" + grid_id + " AND x=" + x + " AND y=" + y
-                cursor.execute(query)
+                query = "SELECT loc_id FROM Location WHERE grid_id=%s AND x=%s AND y=%s"
+                value = (grid_id, x, y)
+                cursor.execute(query, value)
                 v = sum(cursor.fetchall(), ())
         except Exception as e:
             print('Error function:', inspect.stack()[0][3])
@@ -1207,7 +1216,7 @@ class DB:
         try:
             with self.db.cursor() as cursor:
                 query = "SELECT cat_id FROM Category WHERE cat_name=%s AND " \
-                        "super_id=(SELECT super_id FROM SuperCategory WHERE super_name='{}')".format(super_name)
+                        "super_id=(SELECT super_id FROM SuperCategory WHERE super_name='{0}')".format(super_name)
                 value = (cat_name)
                 cursor.execute(query, value)
                 v = sum(cursor.fetchall(), ())
@@ -1550,7 +1559,7 @@ class DB:
 
     def get_bbox_img_id(self, img_id):
         """
-        Object table의 (img_id)를 입력 받아 Object table의 (obj_id) 찾음
+        Object table의 (img_id)를 입력 받아 Object table의 (obj_id) 찾음.
         찾은 (obj_id)로
         Bbox table의 (x), (y), (width), (height)와
         Object_table의 (cat_id), (loc_id) 반환
@@ -1571,6 +1580,105 @@ class DB:
                         "FROM (SELECT obj_id, cat_id, loc_id FROM Object WHERE img_id=%s) AS O " \
                         "INNER JOIN Bbox ON O.obj_id=Bbox.obj_id"
                 value = (img_id)
+                cursor.execute(query, value)
+                v = cursor.fetchall()
+        except Exception as e:
+            print('Error function:', inspect.stack()[0][3])
+            print(e)
+            self.db.rollback()
+            return False
+        else:
+            self.db.commit()
+            if v:
+                return v
+            else:
+                return None
+
+    def get_obj_max_aug(self):
+        """
+        Object table의 (aug_num) 중 max값 반환
+
+        Return:
+            int: Object table의 aug_num
+
+            None: 값 없음
+
+            False: 쿼리 실패
+        """
+        try:
+            with self.db.cursor() as cursor:
+                query = "SELECT MAX(aug_num) FROM Object"
+                cursor.execute(query)
+                v = sum(cursor.fetchall(), ())
+        except Exception as e:
+            print('Error function:', inspect.stack()[0][3])
+            print(e)
+            self.db.rollback()
+            return False
+        else:
+            self.db.commit()
+            if v:
+                return v[0]
+            else:
+                return None
+
+    def get_obj_id_args(self, loc_id, cat_id, iteration, mix_num, aug_num):
+        """
+        Object table의 (obj_id) 반환
+
+        Args:
+            loc_id (str): Object table의 (loc_id)
+            cat_id (str): Object table의 (cat_id)
+            iteration (str): Object table의 (iteration)
+            mix_num (str): Object table의 (mix_num)
+            aug_num (str): Object table의 (aug_num)
+
+        Return:
+            int: Object table의 (obj_id)
+
+            None: 값 없음
+
+            False: 조회 실패
+
+        """
+        try:
+            with self.db.cursor() as cursor:
+                query = "SELECT obj_id FROM Object " \
+                        "WHERE loc_id=%s AND cat_id=%s AND iteration=%s AND mix_num=%s AND aug_num=%s"
+                value = (loc_id, cat_id, iteration, mix_num, aug_num)
+                cursor.execute(query, value)
+                v = sum(cursor.fetchall(), ())
+        except Exception as e:
+            print('Error function:', inspect.stack()[0][3])
+            print(e)
+            self.db.rollback()
+            return False
+        else:
+            self.db.commit()
+            if v:
+                return v[0]
+            else:
+                return None
+
+    def get_mask_obj_id(self, obj_id):
+        """
+        Mask Table의 (obj_id)를 가지는 Mask table의 (id), (x), (y)를
+        2차원 튜플로 반환
+
+        Args:
+            obj_id (str): 조회하기 원하는 Mask table의 (obj_id)
+
+        Return:
+            tuple ()(): ((mask_id, x, y), (...))
+
+            None: 값 없음
+
+            False: 쿼리 실패
+        """
+        try:
+            with self.db.cursor() as cursor:
+                query = "SELECT mask_id, x, y from Mask WHERE obj_id=%s"
+                value = (obj_id)
                 cursor.execute(query, value)
                 v = cursor.fetchall()
         except Exception as e:
@@ -1802,8 +1910,9 @@ class DB:
         Object table의 (cat_id)가 입력받은 값을 가지고 (mix_num)이 -1인 Object table의 row가 존재하고
         해당하는 모든 Object table의 row에 대한 Bbox table의 row와 Mask table의 row가 둘다 존재할 경우 True 반환
         이외의 경우 False 반환
+
         Args:
-            cat_id (str): Object table의 (category_id)
+            cat_id (str): Object table의 (cat_id)
 
         Return:
             Bool: True or False
@@ -1837,12 +1946,12 @@ class DB:
 
     def check_cat_id(self, super_name, cat_name) -> bool:
         """
-        SuperCateogry table의 (name)과 Category table의 (name)을 입력받아
-        Category table의 특정 (id)가 존재하는지 check하는 함수
+        SuperCateogry table의 (super_name)과 Category table의 (cat_name)을 입력받아
+        Category table의 특정 (cat_id)가 존재하는지 check하는 함수
 
         Args:
-            super_name (str): SuperCategory table의 name
-            cat_name (str): Category table의 name
+            super_name (str): SuperCategory table의 (super_name)
+            cat_name (str): Category table의 (cat_name)
 
         Return:
             Bool: True or False
@@ -1868,12 +1977,12 @@ class DB:
 
     def update_img_CN_OI(self, obj_id, check_num) -> bool:
         """
-        Object table의 (id)를 입력 받아
+        Object table의 (obj_id)를 입력 받아
         Image table의 (check_num)을 update 하는 함수
 
         Args:
-            obj_id (str): Object table의 id
-            check_num (str): Image table의 check_num
+            obj_id (str): Object table의 (obj_id)
+            check_num (str): Image table의 (check_num)
 
         Return:
             Bool: True or False
@@ -1895,11 +2004,11 @@ class DB:
 
     def update_img_CN_II(self, img_id, check_num) -> bool:
         """
-        Image table의 check_num 갱신
+        Image table의 (check_num) update
 
         Args:
-            img_id (str): 수정하기 원하는 Object table의 id
-            check_num (str): 수정하기 원하는 Image table의 check_num
+            img_id (str): Object table의 (obj_id)
+            check_num (str): Image table의 (check_num)
 
         Return:
             Bool: True or False
@@ -1920,12 +2029,12 @@ class DB:
 
     def update_img_img_OI(self, obj_id, img) -> bool:
         """
-        Object table의 (id)를 입력 받아
-        Image table의 (data) update 하는 함수
+        Object table의 (obj_id)를 입력 받아
+        Image table의 (img) update 하는 함수
 
         Args:
-            obj_id (str): Object table의 id
-            img (Image): update image 정보
+            obj_id (str): Object table의 (obj_id)
+            img (Image): Image table의 (img)
 
         Return:
             Bool: True or False
@@ -1947,11 +2056,11 @@ class DB:
 
     def update_img_img_II(self, img_id, img) -> bool:
         """
-        Image table의 (data) update
+        Image table의 (img) update
 
         Args:
-            img_id (str): Image table의 (id)
-            img (Image): Image table의 (data)
+            img_id (str): Image table의 (img_id)
+            img (Image): Image table의 (img)
 
         Return:
             False: 쿼리 실패
@@ -1996,10 +2105,10 @@ class DB:
 
     def delete_bbox(self, obj_id) -> bool:
         """
-        Bbox table의 (object_id)를 가지 row 삭제
+        Bbox table의 (obj_id)를 가지는 row 삭제
 
         Args:
-            obj_id (str): Bbox table의 object_id
+            obj_id (str): Bbox table의 (obj_id)
 
         Return:
             Bool: True or False
@@ -2019,10 +2128,10 @@ class DB:
 
     def delete_mask(self, obj_id) -> bool:
         """
-        Mask table의 (object_id)를 가지는 모든 row 삭제
+        Mask table의 (obj_id)를 가지는 모든 row 삭제
 
         Args:
-            obj_id (str): Mask table의 (object_id)
+            obj_id (str): Mask table의 (obj_id)
 
         Return:
             Bool: True or False
@@ -2042,11 +2151,11 @@ class DB:
 
     def delete_bbox_img(self, img_id) -> bool:
         """
-        Object table의 (img_id)를 통해 Object table의 (id)를 가져옴
+        Object table의 (img_id)를 통해 Object table의 (obj_id)를 가져옴
         이를통해 관계된 Bbox table의 (obj_id)를 가지는 모든 bbox 삭제
 
         Args:
-            img_id (str): Object table의 img_id
+            img_id (str): Object table의 (img_id)
 
         Return:
             Bool: True or False
@@ -2069,7 +2178,7 @@ class DB:
     def delete_nomix_img(self, img_id) -> bool:
         """
         Object table의 (img_id)를 받아
-        SuperCa는egory table의 (name)이 mix가 아닌 Object table의 (row) 삭제
+        SuperCategory table의 (super_name)이 mix가 아닌 Object table의 row 삭제
 
         Args:
             img_id (str): Object table의 (img_id)
@@ -2136,7 +2245,7 @@ class DB:
 
     def get_aug_img(self, grid_id, cat_id):
         """
-        Object table의 (cat_id)와 Location의 (grid_id)를 받아
+        Object table의 (cat_id)와 Location table의 (grid_id)를 받아
         Location table의 (x), (y), Object table의 (iteration), Image table의 (img) 반환
 
         Args:
@@ -2177,11 +2286,11 @@ class DB:
 
     def get_aug_loc_id(self, grid_id):
         """
-        Location table의 (grid_id)가 동일한
+        Location table의 (grid_id)를 통해
         Location table의 (x), Location table의 (y), Location table의 (loc_id) 반환
 
         Args:
-            grid_id (str): Grid table의 (id)
+            grid_id (str): Location table의 (grid_id)
 
         Return:
             tuple()(): ((loc_x, loc_y, loc_id), (...))
@@ -2210,7 +2319,8 @@ class DB:
 
     def set_obj_list(self, grid_id, cat_id, iteration, mix_num, aug_num='-1') -> bool:
         """
-        Location table의 (grid_id)를 가진 row와 Category table의 (id)를 가진 row를 통해
+        Location table의 (grid_id)를 가진 row와
+        Category table의 (cat_id)를 가진 row를 통해
         [Location table의 특정 (grid_id)를 가진 row 수] X
         [category table의 특정 (cat_id)를 가진 row 수] X
         [iteration]
@@ -2218,7 +2328,7 @@ class DB:
 
         Args:
             grid_id (str): Location table의 (grid_id)
-            cat_id (str): Category table의 (id)
+            cat_id (str): Category table의 (cat_id)
             iteration (str): Object table의 (iteration)
             mix_num (str): Object table의 (mix_num)
             aug_num (str): Object table의 (aug_num)
@@ -2273,10 +2383,10 @@ class DB:
 
     def set_bulk_obj(self, datas) -> bool:
         """
-        Object table에 여러개의 row 추가
+        Object table에 여러 row 추가
 
         Args:
-            datas (generator): ((img_id, loc_id, category_id, iteration, mix_num), (...))
+            datas (generator): ((img_id, loc_id, cat_id, iteration, mix_num), (...))
 
         Return:
             Bool: True or False
@@ -2324,7 +2434,7 @@ class DB:
         Image table에 여러개의 row 추가
 
         Args:
-            datas (generator): ((env_id, data, type, check_num), (...))
+            datas (generator): ((env_id, img, type, check_num), (...))
 
         Return:
             Bool: True or False
