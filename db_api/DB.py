@@ -1345,7 +1345,8 @@ class DB:
         """
         try:
             with self.db.cursor() as cursor:
-                query = "SELECT obj_id FROM Object WHERE cat_id=%s AND mix_num=-1"
+                query = "SELECT obj_id FROM Object " \
+                        "WHERE cat_id=%s AND mix_num=-1"
                 value = (cat_id)
                 cursor.execute(query, value)
                 v = sum(cursor.fetchall(), ())
@@ -1380,7 +1381,8 @@ class DB:
         """
         try:
             with self.db.cursor() as cursor:
-                query = "SELECT MAX(mix_num) FROM Object WHERE loc_id=%s AND cat_id=%s AND iteration=%s"
+                query = "SELECT MAX(mix_num) FROM Object " \
+                        "WHERE loc_id=%s AND cat_id=%s AND iteration=%s"
                 value = (loc_id, cat_id, iteration)
                 cursor.execute(query, value)
                 mix_num = sum(cursor.fetchall(), ())

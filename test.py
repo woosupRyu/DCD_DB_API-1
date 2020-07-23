@@ -659,3 +659,4 @@ if __name__ == "__main__":
     img_path = "./img"
     cdj = CheckDbJson(db=mydb, json_path=json_path, img_path=img_path)
     cdj.check_all()
+
