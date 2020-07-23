@@ -1360,18 +1360,14 @@ class DB:
             else:
                 return None
 
-    def get_mix_num(self, loc_id, cat_id, iteration):
+    def get_max_mix_num(self):
         """
-        Object table의  (loc_id, cat_id, iteration)를 입력받아
-        Object table의 가장 큰 mix_num을 가진 (mix_num) 반환
-
-        Args:
-            loc_id (str): Object table의 (loc_id)
-            cat_id (str): Object table의 (cat_id)
-            iteration (str): Object table의 (iteration)
+        Location table의 (x)=0, (y)=0인 mix row 찾음 => (loc_id)
+        찾은 (loc_id)를 통해
+        Object table의 mix_num 중 가장 큰 값을 반환
 
         Return:
-            int : Object_table의 MAX(mix_num)
+            int: Object table의 (mix_num) 중 가장 큰 값
 
             None: 값 없음
 
@@ -1379,10 +1375,10 @@ class DB:
         """
         try:
             with self.db.cursor() as cursor:
-                query = "SELECT MAX(mix_num) FROM Object " \
-                        "WHERE loc_id=%s AND cat_id=%s AND iteration=%s"
-                value = (loc_id, cat_id, iteration)
-                cursor.execute(query, value)
+                query = "SELECT MAX(Object.mix_num) " \
+                        "FROM(SELECT loc_id FROM Location WHERE x=0 AND y=0) AS Loc " \
+                        "INNER JOIN Object ON Object.loc_id=Loc.loc_id"
+                cursor.execute(query)
                 mix_num = sum(cursor.fetchall(), ())
         except Exception as e:
             print('Error function:', inspect.stack()[0][3])
