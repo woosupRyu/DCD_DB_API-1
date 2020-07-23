@@ -169,13 +169,12 @@ class DB:
             self.db.commit()
             return True
 
-    def set_environment(self, device_id, ipv4, broker_ip, floor, width, height, depth) -> bool:
+    def set_environment(self, device_id, broker_ip, floor, width, height, depth) -> bool:
         """
         Environment table에 row 추가
 
         Args:
             device_id (str): 냉장고의 device id
-            ipv4 (str): 연결된 냉장고의 ip
             broker_ip (str): 냉장고와 연결된 broker ip
             floor (str) : 냉장고 층
             width (str): 냉장고 층 가로길이
@@ -187,9 +186,9 @@ class DB:
         """
         try:
             with self.db.cursor() as cursor:
-                query = 'INSERT INTO Environment(device_id, ipv4, broker_ip, floor, width, height, depth) ' \
-                        'VALUES(%s, %s, %s, %s, %s, %s, %s)'
-                values = (device_id, ipv4, broker_ip, floor, width, height, depth)
+                query = 'INSERT INTO Environment(device_id, broker_ip, floor, width, height, depth) ' \
+                        'VALUES(%s, %s, %s, %s, %s, %s)'
+                values = (device_id, broker_ip, floor, width, height, depth)
                 cursor.execute(query, values)
         except Exception as e:
             print('Error function:', inspect.stack()[0][3])
@@ -200,14 +199,13 @@ class DB:
             self.db.commit()
             return True
 
-    def update_environment(self, env_id, device_id=None, ipv4=None, broker_ip=None,
+    def update_environment(self, env_id, device_id=None, broker_ip=None,
                            floor=None, width=None, height=None, depth=None) -> bool:
         """
         Environment table의 row 값 갱신
 
         Args:
             env_id (str): Enviroment table의 env_id
-            ipv4 (str): 냉장고 ip 주소
             floor (str): 냉 장고 층
             width (str): 냉장고 층 가로 길이
             height (str): 냉장고 층 세로 길이
@@ -222,8 +220,6 @@ class DB:
                 query_tail = ' WHERE env_id={}'.format(env_id)
                 if device_id is not None:
                     query_head += "device_id='{}', ".format(device_id)
-                if ipv4 is not None:
-                    query_head += "ipv4='{}', ".format(ipv4)
                 if broker_ip is not None:
                     query_head += "broker_ip='{}', ".format(broker_ip)
                 if floor is not None:
@@ -898,12 +894,13 @@ class DB:
             else:
                 return None
 
-    def get_env_id(self, ipv4, floor):
+    def get_env_id(self, device_id, broker_ip, floor):
         """
         Environment table의 (env_id) 반환
 
         Args:
-            ipv4 (str): Environment table의 (ipv4)
+            device_id (str): Environment table의 (device_id)
+            broker_ip (str): Environment table의 (broker_ip)
             floor (str): Environment table (floor)
 
         Return:
@@ -915,7 +912,8 @@ class DB:
         """
         try:
             with self.db.cursor() as cursor:
-                query = "SELECT env_id FROM Environment WHERE ipv4='{}' AND floor={}".format(ipv4, floor)
+                query = "SELECT env_id FROM Environment " \
+                        "WHERE device_id={} AND broker_ip='{}' AND floor={}".format(device_id, broker_ip, floor)
                 cursor.execute(query)
                 v = sum(cursor.fetchall(), ())
 

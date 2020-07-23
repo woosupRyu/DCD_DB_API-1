@@ -75,8 +75,8 @@ class ResetTable:
     def _reset_table(self):
         reset_table(self.db)
         self.db.init_table_no_print()
-        self.db.set_environment(device_id="20001", ipv4="111.111.111.111",
-                                broker_ip="111.111.111.111", floor="1", width="1", height="1", depth="1")
+        self.db.set_environment(device_id="1", broker_ip="111.111.111.111",
+                                floor="1", width="1", height="1", depth="1")
         self.db.set_supercategory(super_name='1')
         self.db.set_grid(width='1', height='1')
         self.db.set_image(env_id='1', img='1', type='0', check_num='1')
@@ -108,11 +108,11 @@ class CheckBasic:
     @print_basic
     def _environment(self):
         # check environment fucntions
-        self.db.set_environment(device_id="20001", ipv4="111.111.111.111",
-                                broker_ip="111.111.111.111", floor="1", width="1", height="1", depth="1")
+        self.db.set_environment(device_id="1", broker_ip="111.111.111.111",
+                                floor="1", width="1", height="1", depth="1")
         self.db.get_table(id='1', table='Environment')
         # self.db.delete_table(id='20001', table='Environment')
-        self.db.update_environment(env_id='1', ipv4='112.112.112.122')
+        self.db.update_environment(env_id='1', broker_ip='112.112.112.122')
         self.table = self.db.list_table(table='Environment')
         self.last_id = self.db.get_last_id(table="Environment")
 
@@ -224,7 +224,7 @@ class CheckGet(ResetTable):
 
     @print_check
     def _get_env_id(self):
-        self.ans = self.db.get_env_id(ipv4='111.111.111.111', floor='1')
+        self.ans = self.db.get_env_id(device_id='1', broker_ip='111.111.111.111', floor='1')
 
     @print_check
     def _get_grid_id(self):
@@ -514,8 +514,8 @@ class CheckAug(ResetTable):
 
     @print_check
     def _get_aug_img(self):
-        self.db.set_environment(device_id="20002", ipv4="111.111.111.111",
-                                broker_ip="111.111.111.111", floor="1", width="1", height="1", depth="1")
+        self.db.set_environment(device_id="2", broker_ip="111.111.111.111",
+                                floor="1", width="1", height="1", depth="1")
         self.db.set_image(env_id='2', img='1ddd', type='2', check_num='3')
         self.db.set_location(grid_id='1', x='1', y='2')
         self.db.set_object(img_id='1', loc_id='2', cat_id='1', iteration='1', mix_num='-1')
