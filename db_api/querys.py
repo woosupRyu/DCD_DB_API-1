@@ -85,7 +85,7 @@ create_object_sql="""
 CREATE TABLE Object(
 obj_id INT UNSIGNED NOT NULL AUTO_INCREMENT,
 loc_id INT UNSIGNED NOT NULL,
-cat_id INT UNSIGNED NOT NULL,
+cat_id INT UNSIGNED,
 img_id INT UNSIGNED,
 iteration INT UNSIGNED NOT NULL,
 mix_num INT NOT NULL,

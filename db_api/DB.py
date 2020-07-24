@@ -1694,7 +1694,7 @@ class DB:
         Grid table의 (width), (height) 값의 최댓값 반환
 
         Return:
-            tuple: (width, height) 각각 최댓값
+            tuple: (MAX(width), MAX(height)) 각각 최댓값
 
             None: 값 없음
 
@@ -2414,11 +2414,10 @@ class DB:
             self.db.commit()
             return True
 
-    def set_mix_obj_list(self, loc_id, iteration, mix_num, aug_num) -> bool:
+    def set_mix_obj_list(self, max_w, max_h, loc_id, iteration, mix_num, aug_num) -> bool:
         """
-        Grid table의 [MAX(width)] X [MAX(height)] X [iteration] 만큼
+        Grid table의 [max_w] X [max_h] X [iteration] 만큼
         Object table에 row를 생성
-        iteration 값은 [MAX(width)] X [MAX(height)]마다 증가 하도록 세팅
 
         dummy data이고 update될 data이기에 unique key 조건을 끔
 
@@ -2436,28 +2435,13 @@ class DB:
                 # unique key 끄기
                 query = "SET unique_checks = 0"
                 cursor.execute(query)
-                # tmp 임시 table 생성
-                query = "CREATE TEMPORARY TABLE tmp(" \
-                        "   loc_id INT UNSIGNED," \
-                        "   iteration TINYINT NOT NULL," \
-                        "   mix_num INT NOT NULL," \
-                        "   aug_num INT NOT NULL" \
-                        ")"
-                cursor.execute(query)
-                # for문 이용해 tmp 테이블에 값을 채움
-                for i in range(int(iteration)):
-                    query = "INSERT INTO tmp(loc_id, iteration, mix_num, aug_num) " \
-                            "VALUES(%s, %s, %s, %s)"
-                    value = (i + 1, mix_num, cat_id, aug_num)
-                    cursor.execute(query, value)
 
-                # main query
-                query = "INSERT INTO Object(loc_id, cat_id, img_id, iteration, mix_num, aug_num) " \
-                        "SELECT Obj.loc_id, Obj.cat_id, Obj.img_id, Obj.iteration, Obj.mix_num, Obj.aug_num " \
-                        "FROM (SELECT * FROM tmp " \
-                        "CROSS JOIN (SELECT loc_id FROM Location WHERE grid_id=%s) AS Loc) AS Obj"
-                value = (grid_id)
-                cursor.execute(query, value)
+                for j in range(int(max_w) * int(max_h)):
+                    for iter in range(int(iteration)):
+                        query = "INSERT INTO Object(img_id, loc_id, cat_id, iteration, mix_num, aug_num) " \
+                                "VALUES(NULL, %s, NULL, %s, %s, %s)"
+                        value = (loc_id, iter, mix_num, aug_num)
+                        cursor.execute(query, value)
 
                 # table id 변경
                 # mysql의 autoincrement gap error 때문에 설정이 필요
@@ -2466,9 +2450,6 @@ class DB:
                 query = "ALTER TABLE Object AUTO_INCREMENT = %s"
                 value = (max_id)
                 cursor.execute(query, value)
-                # tmp table 삭제
-                query = "DROP TABLE tmp"
-                cursor.execute(query)
 
                 # unique key 끄기
                 query = "SET unique_checks = 0"
