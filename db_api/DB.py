@@ -1694,7 +1694,7 @@ class DB:
         Grid table의 (width), (height) 값의 최댓값 반환
 
         Return:
-            tuple: (MAX(width), MAX(height)) 각각 최댓값
+            tuple: (MAX(width), MAX(height))
 
             None: 값 없음
 

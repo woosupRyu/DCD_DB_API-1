@@ -211,7 +211,6 @@ class CheckGet(ResetTable):
         self._get_cat_id_obj()
         self._get_obj_id_img()
         self._get_obj_id()
-        self._get_max_mix_num()
         self._get_bbox_id()
         self._get_bbox()
         self._get_bbox_img()
@@ -221,6 +220,7 @@ class CheckGet(ResetTable):
         self._get_obj_max_aug()
         self._get_obj_id_args()
         self._get_mask_obj_id()
+        self._get_max_mix_num()
         self._get_max_G_size()
         self._set_mix_obj_list()
 
@@ -292,16 +292,6 @@ class CheckGet(ResetTable):
         self.ans = self.db.get_obj_id(cat_id='1')
 
     @print_check
-    def _get_max_mix_num(self):
-        self.db.set_location(grid_id='1', x='0', y='0')
-        self.db.set_object(img_id='1', loc_id='2', cat_id='1', iteration='1', mix_num='-1')
-        self.db.set_object(img_id='1', loc_id='2', cat_id='1', iteration='1', mix_num='0')
-        self.db.set_object(img_id='1', loc_id='2', cat_id='1', iteration='1', mix_num='1')
-        self.db.set_object(img_id='1', loc_id='2', cat_id='1', iteration='1', mix_num='2')
-        self.db.set_object(img_id='1', loc_id='2', cat_id='1', iteration='1', mix_num='3')
-        self.ans = self.db.get_max_mix_num()
-
-    @print_check
     def _get_bbox_id(self):
         self.db.set_bbox(obj_id='1', x='1', y='2', width='1', height='1')
         self.ans = self.db.get_bbox_id(obj_id='1')
@@ -351,6 +341,16 @@ class CheckGet(ResetTable):
         self.db.set_mask(obj_id='1', x='1', y='3')
         self.db.set_mask(obj_id='1', x='1', y='4')
         self.ans = self.db.get_mask_obj_id(obj_id='1')
+
+    @print_check
+    def _get_max_mix_num(self):
+        self.db.set_location(grid_id='1', x='0', y='0')
+        self.db.set_object(img_id='1', loc_id='2', cat_id='1', iteration='1', mix_num='-1')
+        self.db.set_object(img_id='1', loc_id='2', cat_id='1', iteration='1', mix_num='0')
+        self.db.set_object(img_id='1', loc_id='2', cat_id='1', iteration='1', mix_num='1')
+        self.db.set_object(img_id='1', loc_id='2', cat_id='1', iteration='1', mix_num='2')
+        self.db.set_object(img_id='1', loc_id='2', cat_id='1', iteration='1', mix_num='3')
+        self.ans = self.db.get_max_mix_num()
 
     @print_check
     def _get_max_G_size(self):
