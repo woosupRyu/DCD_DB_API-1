@@ -1689,6 +1689,34 @@ class DB:
             else:
                 return None
 
+    def get_max_G_size(self):
+        """
+        Grid table의 (width), (height) 값의 최댓값 반환
+
+        Return:
+            tuple: (width, height) 각각 최댓값
+
+            None: 값 없음
+
+            False: 쿼리 실패
+        """
+        try:
+            with self.db.cursor() as cursor:
+                query = "SELECT MAX(width), MAX(height) FROM Grid"
+                cursor.execute(query)
+                v = sum(cursor.fetchall(), ())
+        except Exception as e:
+            print('Error function:', inspect.stack()[0][3])
+            print(e)
+            self.db.rollback()
+            return False
+        else:
+            self.db.commit()
+            if v:
+                return v
+            else:
+                return None
+
     def list_bbox(self, obj_id):
         """
         Bbox table의 (obj_id)를 이용해
@@ -2322,6 +2350,8 @@ class DB:
         [iteration]
         만큼 Object table에 row 생성
 
+        dummy data이고 update될 data이기에 unique key 조건을 끔
+
         Args:
             grid_id (str): Location table의 (grid_id)
             cat_id (str): Category table의 (cat_id)
@@ -2334,6 +2364,9 @@ class DB:
         """
         try:
             with self.db.cursor() as cursor:
+                # unique key 끄기
+                query = "SET unique_checks = 0"
+                cursor.execute(query)
                 # tmp 임시 table 생성
                 query = "CREATE TEMPORARY TABLE tmp(" \
                         "   img_id INT UNSIGNED," \
@@ -2367,6 +2400,78 @@ class DB:
                 cursor.execute(query, value)
                 # tmp table 삭제
                 query = "DROP TABLE tmp"
+                cursor.execute(query)
+
+                # unique key 끄기
+                query = "SET unique_checks = 0"
+                cursor.execute(query)
+        except Exception as e:
+            print('Error function:', inspect.stack()[0][3])
+            print(e)
+            self.db.rollback()
+            return False
+        else:
+            self.db.commit()
+            return True
+
+    def set_mix_obj_list(self, loc_id, iteration, mix_num, aug_num) -> bool:
+        """
+        Grid table의 [MAX(width)] X [MAX(height)] X [iteration] 만큼
+        Object table에 row를 생성
+        iteration 값은 [MAX(width)] X [MAX(height)]마다 증가 하도록 세팅
+
+        dummy data이고 update될 data이기에 unique key 조건을 끔
+
+        Args:
+            loc_id (str): Object table의 (loc_id)
+            iteration (str): Object table의 (iteration)
+            mix_num (str): Object table의 (mix_num)
+            aug_num (str): Object table의 (aug_num)
+
+        Return:
+            Bool: True or False
+        """
+        try:
+            with self.db.cursor() as cursor:
+                # unique key 끄기
+                query = "SET unique_checks = 0"
+                cursor.execute(query)
+                # tmp 임시 table 생성
+                query = "CREATE TEMPORARY TABLE tmp(" \
+                        "   loc_id INT UNSIGNED," \
+                        "   iteration TINYINT NOT NULL," \
+                        "   mix_num INT NOT NULL," \
+                        "   aug_num INT NOT NULL" \
+                        ")"
+                cursor.execute(query)
+                # for문 이용해 tmp 테이블에 값을 채움
+                for i in range(int(iteration)):
+                    query = "INSERT INTO tmp(loc_id, iteration, mix_num, aug_num) " \
+                            "VALUES(%s, %s, %s, %s)"
+                    value = (i + 1, mix_num, cat_id, aug_num)
+                    cursor.execute(query, value)
+
+                # main query
+                query = "INSERT INTO Object(loc_id, cat_id, img_id, iteration, mix_num, aug_num) " \
+                        "SELECT Obj.loc_id, Obj.cat_id, Obj.img_id, Obj.iteration, Obj.mix_num, Obj.aug_num " \
+                        "FROM (SELECT * FROM tmp " \
+                        "CROSS JOIN (SELECT loc_id FROM Location WHERE grid_id=%s) AS Loc) AS Obj"
+                value = (grid_id)
+                cursor.execute(query, value)
+
+                # table id 변경
+                # mysql의 autoincrement gap error 때문에 설정이 필요
+                query = "SELECT MAX(obj_id) FROM Object"
+                max_id = cursor.execute(query)
+                query = "ALTER TABLE Object AUTO_INCREMENT = %s"
+                value = (max_id)
+                cursor.execute(query, value)
+                # tmp table 삭제
+                query = "DROP TABLE tmp"
+                cursor.execute(query)
+
+                # unique key 끄기
+                query = "SET unique_checks = 0"
                 cursor.execute(query)
         except Exception as e:
             print('Error function:', inspect.stack()[0][3])

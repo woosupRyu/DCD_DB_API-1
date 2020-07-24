@@ -221,6 +221,8 @@ class CheckGet(ResetTable):
         self._get_obj_max_aug()
         self._get_obj_id_args()
         self._get_mask_obj_id()
+        self._get_max_G_size()
+        self._set_mix_obj_list()
 
     @print_check
     def _get_env_id(self):
@@ -349,6 +351,18 @@ class CheckGet(ResetTable):
         self.db.set_mask(obj_id='1', x='1', y='3')
         self.db.set_mask(obj_id='1', x='1', y='4')
         self.ans = self.db.get_mask_obj_id(obj_id='1')
+
+    @print_check
+    def _get_max_G_size(self):
+        self.db.set_grid(width='5', height='6')
+        self.db.set_grid(width='6', height='6')
+        self.db.set_grid(width='7', height='7')
+        self.db.delete_table(id='1', table='Grid')
+        self.ans = self.db.get_max_G_size()
+
+    @print_check
+    def _set_mix_obj_list(self):
+        self.ans = self.db.set_mix_obj_list()
 
 
 class CheckList(ResetTable):
