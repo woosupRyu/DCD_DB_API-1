@@ -648,32 +648,32 @@ if __name__ == "__main__":
     cg = CheckGet(mydb)
     cg.check_all()
 
-    # # list 함수 test
-    # cl = CheckList(mydb)
-    # cl.check_all()
-    #
-    # # check 함수 test
-    # ct = CheckCheck(mydb)
-    # ct.check_all()
-    #
-    # # update 함수 test
-    # cu = CheckUpdate(mydb)
-    # cu.check_all()
-    #
-    # # delete 함수 test
-    # cd = CheckDelete(mydb)
-    # cd.check_all()
-    #
-    # # aug 함수 test
-    # ca = CheckAug(mydb)
-    # ca.check_all()
-    #
-    # # set 함수 test
-    # cs = CheckSet(mydb)
-    # cs.check_all()
-    #
-    # json_path = "./coco_info.json"
-    # img_path = "./img"
-    # cdj = CheckDbJson(db=mydb, json_path=json_path, img_path=img_path)
-    # cdj.check_all()
-    #
+    # list 함수 test
+    cl = CheckList(mydb)
+    cl.check_all()
+
+    # check 함수 test
+    ct = CheckCheck(mydb)
+    ct.check_all()
+
+    # update 함수 test
+    cu = CheckUpdate(mydb)
+    cu.check_all()
+
+    # delete 함수 test
+    cd = CheckDelete(mydb)
+    cd.check_all()
+
+    # aug 함수 test
+    ca = CheckAug(mydb)
+    ca.check_all()
+
+    # set 함수 test
+    cs = CheckSet(mydb)
+    cs.check_all()
+
+    json_path = "./coco_info.json"
+    img_path = "./img"
+    cdj = CheckDbJson(db=mydb, json_path=json_path, img_path=img_path)
+    cdj.check_all()
+
